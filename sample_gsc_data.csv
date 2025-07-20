@@ -1,0 +1,21 @@
+Query,Page,Clicks,Impressions,Position
+python programming,https://example.com/python-tutorial,150,1250,5.6
+https://example.com/spam-url,http://example.com/insecure-page,invalid,890,12.3
+data science tutorial,https://example.com/data-science,89,N/A,8.9
+machine learning*&^%,https://example.com/machine-learning,234,2340,top
+AI 人工智能,https://example.com/ai-guide,45,450,15.2
+web development,https://example.com/web-dev,178,1780,7.8
+http://malicious-site.com,not-a-url,67,670,11.5
+javascript tutorial,https://example.com/js-tutorial,123,1230,6.7
+CSS styling guide,https://example.com/css-guide,99,990,9.8
+HTML basics,https://example.com/html-basics,156,1560,4.3
+React components,ftp://example.com/react,78,780,13.6
+Vue.js framework,https://example.com/vue-js,201,2010,8.1
+database design,https://example.com/database,134,1340,10.4
+SQL queries,https://example.com/sql-queries,167,1670,6.9
+NoSQL databases,https://example.com/nosql,89,890,12.8
+数据分析,https://example.com/analytics,112,1120,9.5
+cloud computing@#$,https://example.com/cloud,145,1450,7.2
+DevOps practices,https://example.com/devops,188,1880,5.8
+API development,https://example.com/api-dev,123,1230,11.3
+microservices architecture,https://example.com/microservices,167,1670,8.6
