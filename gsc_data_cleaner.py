@@ -257,28 +257,79 @@ def create_download_link(df, filename="cleaned_gsc_data.csv"):
     return href
 
 def load_file(uploaded_file):
-    """Load file based on its extension"""
+    """Load file based on its extension with robust CSV parsing"""
     file_extension = uploaded_file.name.lower().split('.')[-1]
 
     try:
         if file_extension == 'csv':
-            # Try different encodings for CSV files
-            try:
-                df = pd.read_csv(uploaded_file, encoding='utf-8')
-            except UnicodeDecodeError:
+            # Try different encodings and parsing strategies for CSV files
+            encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+            delimiters = [',', '\t', ';', '|']
+
+            df = None
+            last_error = None
+
+            # Strategy 1: Try with automatic delimiter detection and skip bad lines
+            for encoding in encodings:
                 try:
-                    df = pd.read_csv(uploaded_file, encoding='latin-1')
-                except UnicodeDecodeError:
-                    df = pd.read_csv(uploaded_file, encoding='cp1252')
+                    uploaded_file.seek(0)  # Reset file pointer
+                    df = pd.read_csv(
+                        uploaded_file,
+                        encoding=encoding,
+                        on_bad_lines='skip',  # Skip malformed lines
+                        engine='python',  # Use Python engine for better delimiter detection
+                        sep=None  # Auto-detect delimiter
+                    )
+                    if df is not None and not df.empty:
+                        st.info(f"✅ File loaded successfully with encoding: {encoding}")
+                        return df
+                except Exception as e:
+                    last_error = e
+                    continue
+
+            # Strategy 2: Try with explicit delimiters if auto-detection fails
+            for encoding in encodings:
+                for delimiter in delimiters:
+                    try:
+                        uploaded_file.seek(0)  # Reset file pointer
+                        df = pd.read_csv(
+                            uploaded_file,
+                            encoding=encoding,
+                            delimiter=delimiter,
+                            on_bad_lines='skip',  # Skip malformed lines
+                            engine='python',
+                            quoting=1  # QUOTE_ALL to handle quoted fields
+                        )
+                        if df is not None and not df.empty and len(df.columns) > 1:
+                            delimiter_name = {',': 'comma', '\t': 'tab', ';': 'semicolon', '|': 'pipe'}.get(delimiter, repr(delimiter))
+                            st.info(f"✅ File loaded with encoding: {encoding}, delimiter: {delimiter_name}")
+                            return df
+                    except Exception as e:
+                        last_error = e
+                        continue
+
+            # If all attempts fail, raise the last error with helpful context
+            if last_error:
+                raise last_error
+
         elif file_extension in ['xlsx', 'xls']:
             df = pd.read_excel(uploaded_file)
+            return df
         else:
             st.error(f"Unsupported file format: {file_extension}")
             return None
 
-        return df
     except Exception as e:
         st.error(f"Error reading file: {str(e)}")
+        st.warning("💡 **Troubleshooting tips:**")
+        st.markdown("""
+        - Make sure your CSV file uses standard delimiters (comma, tab, semicolon)
+        - Check that all rows have the same number of columns
+        - Remove any extra blank lines or malformed rows from the file
+        - Try opening the file in Excel and re-saving as CSV (UTF-8)
+        - Ensure there are no special characters or unescaped quotes causing parsing issues
+        - If the problem persists, try removing rows around line number mentioned in the error
+        """)
         return None
 
 # File uploader with multiple format support
@@ -293,7 +344,7 @@ if uploaded_file is not None:
         # Load the dataframe
         df = load_file(uploaded_file)
 
-        if df is not None:
+        if df is not None and not df.empty:
             st.success(f"✅ File uploaded successfully! Shape: {df.shape}")
 
             # Display original data preview
@@ -401,6 +452,8 @@ if uploaded_file is not None:
 
                         # Store cleaned data in session state for further use
                         st.session_state.cleaned_df = cleaned_df
+        else:
+            st.warning("⚠️ Unable to load the file or the file is empty. Please check the file format and try again.")
 
     except Exception as e:
         st.error(f"❌ Error processing file: {str(e)}")
